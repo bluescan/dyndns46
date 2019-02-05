@@ -9,7 +9,7 @@ The tool depends on curl being available. On Windows 10 curl comes preinstalled,
 
 Here is an example of a full configuration file for tacit-dyndns:
 
-```
+<pre style="tab-size:4;"><code style="tab-size:4;">
 ; Example of a full configuration file for tacit-dyndns.
 ;
 ; This config file is in symbolic-expression syntax.
@@ -45,4 +45,5 @@ Here is an example of a full configuration file for tacit-dyndns:
 	[ password		password ]
 	[ mode			changed ]					; Default. Choices are always (send every time) or changed (only send if different from last successful update).
 ]
-```
+</code></pre>
+

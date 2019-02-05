@@ -1,6 +1,11 @@
+.vs/*
 
 TacitDynDns\.ips
 
 TacitDynDnsTwookes\.cfg
 
-TacitDynDns\.vcxproj\.user
+Debug/
+
+Release/
+
+*.exe

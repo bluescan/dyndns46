@@ -65,6 +65,6 @@ A minimal config file that updates a single domain's ipv4 address using https lo
 ]
 ```
 
-#build instructions
+# build instructions
 
-Onpen the solution file in VS 2017 Community and hit build.
+Open the solution file in VS 2017 Community and hit build.

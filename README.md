@@ -7,43 +7,58 @@ The intent is that you run the tool at regular intervals (perhaps every 15 minut
 
 The tool depends on curl being available. On Windows 10 curl comes preinstalled, which is quite helpful.
 
-Here is an example of a full configuration file for tacit-dyndns:
+Here is an example of a full configuration file for TacitDynDns:
 
-<pre style="tab-size:4;"><code style="tab-size:4;">
-; Example of a full configuration file for tacit-dyndns.
+```
+; Example full configuration file for TacitDynDns.
 ;
 ; This config file is in symbolic-expression syntax.
 ; Any files or external references are relative to the working dir unless you specify an absolute path.
 ; Use forward slashes for directory separators.
 [
-	environment
-	[ statefile		DynDnsUpdate.ips ]			; Default. This file stores the last IP addresses successfully sent.
-	[ logfile		DynDnsUpdate.log ]			; Default. This log is appended to. Tells you when updates were applied/attempted.
-	[ verbosity		normal ]					; Default. Choices are verbose (logs attempts and updates), normal (updates only), and none (no writing to log).
-	[ iplookup		ifconfig.co ]				; Default. What external service to use to receive your current IPV4 or IPV6 address. Defaults to ifconfig.co
-	[ curl			curl.exe ]					; Default. Windows 10 has curl built in. Specify the path to curl.exe if you want to use a different version.
+    environment
+    [ statefile     TacitDynDns.ips ]           ; Default. This file stores the last IP addresses successfully sent.
+    [ logfile       TacitDynDns.log ]           ; Default. This log is appended to. Tells you when updates were applied/attempted.
+    [ verbosity     normal ]                    ; Default. Choices are verbose (logs attempts and updates), normal (updates only), and none (no writing to log).
+    [ iplookup      ifconfig.co ]               ; Default. What external service to use to receive your current IPV4 or IPV6 address. Defaults to ifconfig.co
+    [ curl          curl.exe ]                  ; Default. Windows 10 has curl built in. Specify the path to curl.exe if you want to use a different version.
 ]
 
 [
-	update
-	[ domain		your.domain.org ]
-	[ service		update.spdyn.de/nic/update ]
-	[ record		ipv4 ]						; Default. Choices are A or AAAA (or use the synonyms ipv4 or ipv6)
-	[ protocol		https ]						; Default. Choices are http or https. Use https if your service supports it.
-	[ username		username ]
-	[ password		password ]
-	[ mode			changed ]					; Default. Choices are always (send every time) or changed (only send if different from last successful update).
+    update
+    [ domain        your.domain.org ]
+    [ service       update.spdyn.de/nic/update ]
+    [ record        ipv4 ]                      ; Default. Choices are A or AAAA (or use the synonyms ipv4 or ipv6)
+    [ protocol      https ]                     ; Default. Choices are http or https. Use https if your service supports it.
+    [ username      username ]
+    [ password      password ]
+    [ mode          changed ]                   ; Default. Choices are always (send every time) or changed (only send if different from last successful update).
 ]
 
 [
-	update
-	[ domain		your.domain.org ]
-	[ service		update.spdyn.de/nic/update ]
-	[ record		ipv6 ]						; Choices are A or AAAA (or use the synonyms ipv4 or ipv6)
-	[ protocol		https ]						; Default. Choices are http or https. Use https if your service supports it.
-	[ username		username ]
-	[ password		password ]
-	[ mode			changed ]					; Default. Choices are always (send every time) or changed (only send if different from last successful update).
+    update
+    [ domain        your.domain.org ]
+    [ service       update.spdyn.de/nic/update ]
+    [ record        ipv6 ]                      ; Choices are A or AAAA (or use the synonyms ipv4 or ipv6)
+    [ protocol      https ]                     ; Default. Choices are http or https. Use https if your service supports it.
+    [ username      username ]
+    [ password      password ]
+    [ mode          changed ]                   ; Default. Choices are always (send every time) or changed (only send if different from last successful update).
 ]
-</code></pre>
+```
 
+You can have as many 'update' blocks as you like. If you want to update the same domain with both an ipv4 and an ipv6, have a block for each.
+
+A minimal config file that updates a single domain's ipv4 address using https looks like this:
+
+```
+; Minimal configuration file for TacitDynDns.
+
+[
+    update
+    [ domain        your.domain.org ]
+    [ service       update.spdyn.de/nic/update ]
+    [ username      username ]
+    [ password      password ]
+]
+```

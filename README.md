@@ -46,4 +46,3 @@ Here is an example of a full configuration file for tacit-dyndns:
 	[ mode			changed ]					; Default. Choices are always (send every time) or changed (only send if different from last successful update).
 ]
 ```
-

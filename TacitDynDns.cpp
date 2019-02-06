@@ -16,6 +16,7 @@
 #include <System/tCommand.h>
 #include <System/tFile.h>
 #include <System/tScript.h>
+#include <System/tUtil.h>
 #include <Build/tProcess.h>
 
 
@@ -35,6 +36,7 @@ namespace DynDns
 	enum class eProtocol		{	HTTPS,		HTTP };
 	enum class eMode			{	Changed,	Always };
 
+	void ReadConfigFile(const tString& configFile);
 	void ParseEnvironmentBlock(tExpr& block);
 	void ParseUpdateBlock(tExpr& block);
 	void ReadCurrentState();
@@ -51,9 +53,10 @@ namespace DynDns
 	tString LogFile = "TacitDynDns.log";
 	enum class eLogVerbosity
 	{
-		None,
-		Normal,
-		High
+		None,				// No log entries.
+		Minimal,			// Only actual updates.
+		Normal,				// Updates and no-update-required entries.
+		Full				// Full logging.
 	};
 	eLogVerbosity Verbosity = eLogVerbosity::Normal;
 	tString IpLookup = "ifconfig.co";
@@ -72,6 +75,25 @@ namespace DynDns
 		tString LastUpdateIP;
 	};
 	tList<UpdateBlock> UpdateBlocks;
+	tFileHandle Log = nullptr;
+}
+
+
+void DynDns::ReadConfigFile(const tString& configFile)
+{
+	tScriptReader cfg(configFile);
+	tExpr block = cfg.Arg0();
+	while (block.IsValid())
+	{
+		tString blockType = block.Item0().GetAtomString();
+		if (blockType == "environment")
+			DynDns::ParseEnvironmentBlock(block);
+
+		else if (blockType == "update")
+			DynDns::ParseUpdateBlock(block);
+
+		block = block.Next();
+	}
 }
 
 
@@ -88,10 +110,14 @@ void DynDns::ParseEnvironmentBlock(tExpr& block)
 		else if (tString(entry.Cmd()) == "verbosity")
 		{
 			tString verb = entry.Arg1().GetAtomString();
-			if (verb == "verbose")
-				Verbosity = eLogVerbosity::High;
-			else if (verb == "none")
+			if (verb == "none")
 				Verbosity = eLogVerbosity::None;
+			else if (verb == "minimal")
+				Verbosity = eLogVerbosity::Minimal;
+			else if (verb == "normal")
+				Verbosity = eLogVerbosity::Normal;
+			else if (verb == "full")
+				Verbosity = eLogVerbosity::Full;
 		}
 
 		else if (tString(entry.Cmd()) == "iplookup")
@@ -155,9 +181,10 @@ void DynDns::ReadCurrentState()
 	tExpr entry = state.Arg0();
 	while (entry.IsValid())
 	{
-		tString domain = entry.Item0();
-		eRecord record = (tString(entry.Item1()) == "ipv6") ? eRecord::IPV6 : eRecord::IPV4;
-		tString ip = entry.Item2();
+		uint64 timeStamp = entry.Item0().GetAtomUint64();
+		tString domain = entry.Item1();
+		eRecord record = (tString(entry.Item2()) == "ipv6") ? eRecord::IPV6 : eRecord::IPV4;
+		tString ip = entry.Item3();
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
@@ -179,7 +206,6 @@ void DynDns::UpdateAllServices()
 	// Are there any IP overrides?
 	for (tStringItem* a = Override.Args.First(); a; a = a->Next())
 	{
-		tPrintf("Override %s\n", a->ConstText());
 		if (a->CountChar('.') == 3)
 			ipv4 = *a;
 		else if (a->CountChar(':') == 7)
@@ -191,11 +217,11 @@ void DynDns::UpdateAllServices()
 		tProcess curlIPV4("curl -4 ifconfig.co", tGetCurrentDir(), ipv4, &exitCode);
 		ipv4.Replace('\n', '\0');
 		ipv4.Replace('\r', '\0');
-		tPrintf("Your IPV4 is: ____%s____\n", ipv4.ConstText());
 	}
 	else
 	{
-		tPrintf("IPV4 override: %s\n", ipv4.Pod());
+		if (Verbosity >= eLogVerbosity::Normal)
+			ttfPrintf(Log, "Log: IPV4 Override of: %s\n", ipv4.Pod());
 	}
 
 	if (ipv6.IsEmpty())
@@ -203,16 +229,19 @@ void DynDns::UpdateAllServices()
 		tProcess curlIPV6("curl -6 ifconfig.co", tGetCurrentDir(), ipv6, &exitCode);
 		ipv6.Replace('\n', '\0');
 		ipv6.Replace('\r', '\0');
-		tPrintf("Your IPV6 is: ____%s____\n", ipv6.ConstText());
 	}
 	else
 	{
-		tPrintf("IPV6 override: %s\n", ipv6.Pod());
+		if (Verbosity >= eLogVerbosity::Normal)
+			ttfPrintf(Log, "Log: IPV6 Override of: %s\n", ipv6.Pod());
 	}
 
 	// Update ipv4 blocks.
 	if (ipv4.CountChar('.') == 3)
 	{
+		if (Verbosity >= eLogVerbosity::Full)
+			ttfPrintf(Log, "Log: Using IPV4: %s\n", ipv4.Pod());
+
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
 			if (block->Record != eRecord::IPV4)
@@ -231,8 +260,8 @@ void DynDns::UpdateAllServices()
 					block->LastUpdateIP = ipv4;
 			}
 			else
-			{
-				tPrintf("Skipping update.\n");
+			{////////////////////////////////// FINISH LOG. NO CONSOLE MODE.
+				ttfPrintf(Log, "Skipping ipv4 update...\n");
 			}
 		}
 	}
@@ -240,6 +269,9 @@ void DynDns::UpdateAllServices()
 	// Update ipv6 blocks.
 	if (ipv6.CountChar(':') == 7)
 	{
+		if (Verbosity >= eLogVerbosity::Full)
+			ttfPrintf(Log, "Log: Using IPV6: %s\n", ipv6.Pod());
+
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
 			if (block->Record != eRecord::IPV6)
@@ -251,6 +283,9 @@ void DynDns::UpdateAllServices()
 				block->LastUpdateIP.IsEmpty() ||
 				(block->LastUpdateIP != ipv6);
 
+			//if (Verbosity >= eLogVerbosity::Full)
+			//	ttfPrintf(Log, "Log: Using IPV6: %s\n", ipv6.Pod());
+
 			if (attemptUpdate)
 			{
 				bool updated = RunCurl(block->Protocol, block->Username, block->Password, block->Service, block->Domain, ipv6);
@@ -259,7 +294,7 @@ void DynDns::UpdateAllServices()
 			}
 			else
 			{
-				tPrintf("Skipping update.\n");
+				ttfPrintf(Log, "Skipping ipv6 update...\n");
 			}
 		}
 	}
@@ -308,7 +343,9 @@ void DynDns::WriteCurrentState()
 	{
 		if (!block->LastUpdateIP.IsEmpty())
 		{
+			uint64 absTime = tGetTimeLocal();
 			state.BeginExpression();
+			state.WriteAtom(absTime);
 			state.WriteAtom(block->Domain);
 			state.WriteAtom((block->Record == eRecord::IPV4) ? "ipv4" : "ipv6");
 			state.WriteAtom(block->LastUpdateIP);
@@ -340,24 +377,16 @@ int main(int argc, char** argv)
 			return 1;
 		}
 
-		tScriptReader cfg(configFile);
-
-		tExpr block = cfg.Arg0();
-		while (block.IsValid())
-		{
-			tString blockType = block.Item0().GetAtomString();
-			if (blockType == "environment")
-				DynDns::ParseEnvironmentBlock(block);
-
-			else if (blockType == "update")
-				DynDns::ParseUpdateBlock(block);
-
-			block = block.Next();
-		}
+		DynDns::ReadConfigFile(configFile);
+		DynDns::Log = tOpenFile(DynDns::LogFile.Pod(), "at+");
+		ttfPrintf(DynDns::Log, "Begin entry.\n");
 
 		DynDns::ReadCurrentState();
 		DynDns::UpdateAllServices();
 		DynDns::WriteCurrentState();
+
+		ttfPrintf(DynDns::Log, "End entry.\n");
+		tSystem::tCloseFile(DynDns::Log);
 	}
 	catch (tError error)
 	{

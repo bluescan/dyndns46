@@ -24,8 +24,8 @@ using namespace tBuild;
 using namespace tSystem;
 tCommand::tOption Help("Display help.", 'h', "help");
 tCommand::tOption Force("Force an update even if no change detected.", 'f', "force");
-tCommand::tOption OverrideAddr("Override the address that gets sent. It will autodetect ipv4 or ipv6. You can add an additional option to do both.", 'o', "override", 1);
-tCommand::tParam ConfigFile(1, "ConfigFile", "The DynDnsUpdate config file. Defaults to DynDnsUpdate.cfg");
+tCommand::tOption Override("Override the address that gets sent. It will autodetect ipv4 or ipv6. You can add an additional option to do both.", 'o', "override", 1);
+tCommand::tParam ConfigFile(1, "ConfigFile", "The TacitDynDns config file. Defaults to TacitDynDns.cfg");
 
 
 namespace DynDns
@@ -47,8 +47,8 @@ namespace DynDns
 	void WriteCurrentState();
 
 	// Environment state variables.
-	tString StateFile = "DynDnsUpdate.ips";
-	tString LogFile = "DynDnsUpdate.log";
+	tString StateFile = "TacitDynDns.ips";
+	tString LogFile = "TacitDynDns.log";
 	enum class eLogVerbosity
 	{
 		None,
@@ -173,18 +173,42 @@ void DynDns::ReadCurrentState()
 void DynDns::UpdateAllServices()
 {
 	ulong exitCode = 0;
-
 	tString ipv4;
-	tProcess curlIPV4("curl -4 ifconfig.co", tGetCurrentDir(), ipv4, &exitCode);
-	ipv4.Replace('\n', '\0');
-	ipv4.Replace('\r', '\0');
-	tPrintf("Your IPV4 is: ____%s____\n", ipv4.ConstText());
-
 	tString ipv6;
-	tProcess curlIPV6("curl -6 ifconfig.co", tGetCurrentDir(), ipv6, &exitCode);
-	ipv6.Replace('\n', '\0');
-	ipv6.Replace('\r', '\0');
-	tPrintf("Your IPV6 is: ____%s____\n", ipv6.ConstText());
+
+	// Are there any IP overrides?
+	for (tStringItem* a = Override.Args.First(); a; a = a->Next())
+	{
+		tPrintf("Override %s\n", a->ConstText());
+		if (a->CountChar('.') == 3)
+			ipv4 = *a;
+		else if (a->CountChar(':') == 7)
+			ipv6 = *a;
+	}
+
+	if (ipv4.IsEmpty())
+	{
+		tProcess curlIPV4("curl -4 ifconfig.co", tGetCurrentDir(), ipv4, &exitCode);
+		ipv4.Replace('\n', '\0');
+		ipv4.Replace('\r', '\0');
+		tPrintf("Your IPV4 is: ____%s____\n", ipv4.ConstText());
+	}
+	else
+	{
+		tPrintf("IPV4 override: %s\n", ipv4.Pod());
+	}
+
+	if (ipv6.IsEmpty())
+	{
+		tProcess curlIPV6("curl -6 ifconfig.co", tGetCurrentDir(), ipv6, &exitCode);
+		ipv6.Replace('\n', '\0');
+		ipv6.Replace('\r', '\0');
+		tPrintf("Your IPV6 is: ____%s____\n", ipv6.ConstText());
+	}
+	else
+	{
+		tPrintf("IPV6 override: %s\n", ipv6.Pod());
+	}
 
 	// Update ipv4 blocks.
 	if (ipv4.CountChar('.') == 3)
@@ -277,7 +301,7 @@ void DynDns::WriteCurrentState()
 {
 	tScriptWriter state(StateFile);
 
-	state.WriteComment("DynDnsUpdate current state data.");
+	state.WriteComment("TacitDynDns current state data.");
 	state.NewLine();
 
 	for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
@@ -306,13 +330,13 @@ int main(int argc, char** argv)
 			return 0;
 		}
 
-		tString configFile = "DynDnsUpdate.cfg";
+		tString configFile = "TacitDynDns.cfg";
 		if (ConfigFile)
 			configFile = ConfigFile.Get();
 
 		if (!tFileExists(configFile))
 		{
-			tPrintf("No config file found. Default config name is DynDnsUpdate.cfg or enter preferred config file in command line.\n");
+			tPrintf("No config file found. Default config name is TacitDynDns.cfg or enter preferred config file in command line.\n");
 			return 1;
 		}
 
@@ -328,7 +352,6 @@ int main(int argc, char** argv)
 			else if (blockType == "update")
 				DynDns::ParseUpdateBlock(block);
 
-			//tPrintf("Block name:%s\n", .ConstText());
 			block = block.Next();
 		}
 

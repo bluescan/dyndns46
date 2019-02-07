@@ -240,7 +240,7 @@ void DynDns::UpdateAllServices()
 	if (ipv4.CountChar('.') == 3)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
-			ttfPrintf(Log, "Log: Using IPV4 %s for all blocks.\n", ipv4.Pod());
+			ttfPrintf(Log, "Log: Detected IPV4: %s\n", ipv4.Pod());
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
@@ -274,7 +274,7 @@ void DynDns::UpdateAllServices()
 	if (ipv6.CountChar(':') == 7)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
-			ttfPrintf(Log, "Log: Using IPV4 %s for all blocks.\n", ipv6.Pod());
+			ttfPrintf(Log, "Log: Detected IPV6: %s\n", ipv6.Pod());
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
@@ -397,14 +397,14 @@ int main(int argc, char** argv)
 			DynDns::Log = tOpenFile(DynDns::LogFile.Pod(), "at+");
 
 		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Full)
-			ttfPrintf(DynDns::Log, "Begin entry.\n");
+			ttfPrintf(DynDns::Log, "Log: Begin entry.\n");
 
 		DynDns::ReadCurrentState();
 		DynDns::UpdateAllServices();
 		DynDns::WriteCurrentState();
 
 		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Full)
-			ttfPrintf(DynDns::Log, "End entry.\n");
+			ttfPrintf(DynDns::Log, "Log: End entry.\n");
 		tSystem::tCloseFile(DynDns::Log);
 	}
 	catch (tError error)

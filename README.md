@@ -43,7 +43,7 @@ Here is an example of a full configuration file for TacitDynDns:
     [ protocol      https ]                     ; Default. Choices are http or https. Use https if your service supports it.
     [ username      username ]
     [ password      password ]
-    [ mode          ch anged ]                  ; Default. Choices are always (send every time) or changed (only send if different from last successful update).
+    [ mode          changed ]                   ; Default. Choices are always (send every time) or changed (only send if different from last successful update).
 ]
 ```
 

@@ -3,9 +3,9 @@ A dynamic DNS updater for Windows written in C++ that uses tacent and curl. Supp
 
 The tool has been tested with update.spdyn.de but ought to work with other providers -- at worst a small change to the syntax of the curl request would be needed.
 
-The intent is that you run the tool at regular intervals (perhaps every 15 minutes) via a sceduled task. Running the tool does not send an update every time -- the default configuration updates only when a change is detected.
+The intent is that you run the tool at regular intervals (perhaps every 15 minutes) via a scheduled task. Running the tool does not send an update every time -- the default configuration updates only when a change is detected.
 
-TacitDynDns depends on curl being available. Curl ships with Windows 10 so no need to do anything more. You can specify the curl executable to use if you prefer.
+TacitDynDns depends on curl being available. Curl ships with Windows 10 so no need to do anything more on that OS. You may specify an alternate curl executable if you prefer.
 
 Here is an example of a full configuration file for TacitDynDns:
 
@@ -61,6 +61,8 @@ A minimal config file that updates a single domain's ipv4 address using https lo
     [ password      password ]
 ]
 ```
+
+The default config file is TacitDynDns.cfg -- or you can specify a different one on the command line. Additional command-line options include the ability to force an update as well as override the IP(s) that get sent. To view the options run "TacitDynDns --help" in a console.
 
 # build instructions
 

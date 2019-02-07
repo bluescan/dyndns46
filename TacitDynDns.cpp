@@ -221,7 +221,7 @@ void DynDns::UpdateAllServices()
 	else
 	{
 		if (Verbosity >= eLogVerbosity::Normal)
-			ttfPrintf(Log, "Log: IPV4 Override of: %s\n", ipv4.Pod());
+			ttfPrintf(Log, "Log: Using IPV4 Override of: %s\n", ipv4.Pod());
 	}
 
 	if (ipv6.IsEmpty())
@@ -233,35 +233,39 @@ void DynDns::UpdateAllServices()
 	else
 	{
 		if (Verbosity >= eLogVerbosity::Normal)
-			ttfPrintf(Log, "Log: IPV6 Override of: %s\n", ipv6.Pod());
+			ttfPrintf(Log, "Log: Using IPV6 Override of: %s\n", ipv6.Pod());
 	}
 
 	// Update ipv4 blocks.
 	if (ipv4.CountChar('.') == 3)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
-			ttfPrintf(Log, "Log: Using IPV4: %s\n", ipv4.Pod());
+			ttfPrintf(Log, "Log: Using IPV4 %s for all blocks.\n", ipv4.Pod());
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
 			if (block->Record != eRecord::IPV4)
 				continue;
 
-			bool attemptUpdate =
-				Force ||
-				(block->Mode == eMode::Always) ||
-				block->LastUpdateIP.IsEmpty() ||
-				(block->LastUpdateIP != ipv4);
-
+			bool attemptUpdate = Force || (block->Mode == eMode::Always) || (block->LastUpdateIP != ipv4);
 			if (attemptUpdate)
 			{
 				bool updated = RunCurl(block->Protocol, block->Username, block->Password, block->Service, block->Domain, ipv4);
 				if (updated)
+				{
+					if (Verbosity >= eLogVerbosity::Minimal)
+						ttfPrintf(Log, "Log: Updated IPV4 %s for domain: %s\n", ipv4.Pod(), block->Domain.Pod());
+
 					block->LastUpdateIP = ipv4;
+				}
+				else if (Verbosity >= eLogVerbosity::Full)
+				{
+					ttfPrintf(Log, "Warning: Failed running curl with IPV4 %s for domain %d.\n", ipv4.Pod(), block->Domain.Pod());
+				}
 			}
-			else
-			{////////////////////////////////// FINISH LOG. NO CONSOLE MODE.
-				ttfPrintf(Log, "Skipping ipv4 update...\n");
+			else if (Verbosity >= eLogVerbosity::Normal)
+			{
+				ttfPrintf(Log, "Log: Skipping IPV4 %s update because no force/always and last IP equal to current.\n", ipv4.Pod());
 			}
 		}
 	}
@@ -270,31 +274,32 @@ void DynDns::UpdateAllServices()
 	if (ipv6.CountChar(':') == 7)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
-			ttfPrintf(Log, "Log: Using IPV6: %s\n", ipv6.Pod());
+			ttfPrintf(Log, "Log: Using IPV4 %s for all blocks.\n", ipv6.Pod());
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
 			if (block->Record != eRecord::IPV6)
 				continue;
 
-			bool attemptUpdate =
-				Force ||
-				(block->Mode == eMode::Always) ||
-				block->LastUpdateIP.IsEmpty() ||
-				(block->LastUpdateIP != ipv6);
-
-			//if (Verbosity >= eLogVerbosity::Full)
-			//	ttfPrintf(Log, "Log: Using IPV6: %s\n", ipv6.Pod());
-
+			bool attemptUpdate = Force || (block->Mode == eMode::Always) || (block->LastUpdateIP != ipv6);
 			if (attemptUpdate)
 			{
 				bool updated = RunCurl(block->Protocol, block->Username, block->Password, block->Service, block->Domain, ipv6);
 				if (updated)
+				{
+					if (Verbosity >= eLogVerbosity::Minimal)
+						ttfPrintf(Log, "Log: Updated IPV6 %s for domain: %s\n", ipv6.Pod(), block->Domain.Pod());
+
 					block->LastUpdateIP = ipv6;
+				}
+				else if (Verbosity >= eLogVerbosity::Full)
+				{
+					ttfPrintf(Log, "Warning: Failed running curl with IPV6 %s for domain %d.\n", ipv6.Pod(), block->Domain.Pod());
+				}
 			}
-			else
+			else if (Verbosity >= eLogVerbosity::Normal)
 			{
-				ttfPrintf(Log, "Skipping ipv6 update...\n");
+				ttfPrintf(Log, "Log: Skipping IPV6 %s update because no force/always and last IP equal to current.\n", ipv6.Pod());
 			}
 		}
 	}
@@ -314,8 +319,6 @@ bool DynDns::RunCurl
 	tsPrintf(cmd, "%s \"%s://%s:%s@%s?hostname=%s&myip=%s\"",
 		Curl.Pod(), prot.Pod(), user.Pod(), pass.Pod(), service.Pod(), domain.Pod(), ipaddr.Pod());
 
-	tPrintf("CURL\n%s\n", cmd.Pod());
-
 	ulong exitCode = 0;
 	tString result;
 	tProcess curl(cmd, tGetCurrentDir(), result, &exitCode);
@@ -323,7 +326,12 @@ bool DynDns::RunCurl
 	result.Replace('\r', '\0');
 
 	// Result may be "nochg 212.34.22.489" for success/no-change or "good 212.34.22.489" for success/change.
-	tPrintf("Exitcode: %d Result: ____%s____\n", exitCode, result.Pod());
+	if (Verbosity >= eLogVerbosity::Full)
+	{
+		ttfPrintf(Log, "Log: Curl command: %s\n", cmd.Pod());
+		ttfPrintf(Log, "Log: Curl result: Exitcode=%d Response: %s\n", exitCode, result.Pod());
+	}
+
 	bool success = false;
 	if ((exitCode == 0) && ((result.FindString("good") != -1) || (result.FindString("nochg") != -1)))
 		success = true;
@@ -335,7 +343,6 @@ bool DynDns::RunCurl
 void DynDns::WriteCurrentState()
 {
 	tScriptWriter state(StateFile);
-
 	state.WriteComment("TacitDynDns current state data.");
 	state.NewLine();
 
@@ -358,6 +365,14 @@ void DynDns::WriteCurrentState()
 
 int main(int argc, char** argv)
 {
+	// If launched from a console we can attach to it. Great.
+	if (AttachConsole(ATTACH_PARENT_PROCESS))
+	{
+		WinHandle console = GetStdHandle(STD_OUTPUT_HANDLE);
+		freopen("CON", "w", stdout);
+	}
+	tPrintf("\n");
+
 	try
 	{
 		tCommand::tParse(argc, argv);
@@ -378,19 +393,24 @@ int main(int argc, char** argv)
 		}
 
 		DynDns::ReadConfigFile(configFile);
-		DynDns::Log = tOpenFile(DynDns::LogFile.Pod(), "at+");
-		ttfPrintf(DynDns::Log, "Begin entry.\n");
+		if (DynDns::Verbosity != DynDns::eLogVerbosity::None)
+			DynDns::Log = tOpenFile(DynDns::LogFile.Pod(), "at+");
+
+		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Full)
+			ttfPrintf(DynDns::Log, "Begin entry.\n");
 
 		DynDns::ReadCurrentState();
 		DynDns::UpdateAllServices();
 		DynDns::WriteCurrentState();
 
-		ttfPrintf(DynDns::Log, "End entry.\n");
+		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Full)
+			ttfPrintf(DynDns::Log, "End entry.\n");
 		tSystem::tCloseFile(DynDns::Log);
 	}
 	catch (tError error)
 	{
-		tPrintf("Error:\n%s\n", error.Message.ConstText());
+		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Normal)
+			ttfPrintf(DynDns::Log, "Error:\n%s\n", error.Message.Pod());
 		return 1;
 	}
 

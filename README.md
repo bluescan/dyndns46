@@ -62,7 +62,7 @@ A minimal config file that updates a single domain's ipv4 address using https lo
 ]
 ```
 
-The default config file is TacitDynDns.cfg -- or you can specify a different one on the command line. Additional command-line options include the ability to force an update as well as override the IP(s) that get sent. To view the options run "TacitDynDns --help" in a console.
+The default config file is TacitDynDns.cfg -- or you can specify a different one on the command line. Additional command-line options include the ability to force an update as well as override the IP(s) that get sent. To view the options run `TacitDynDns --help` in a console.
 
 # build instructions
 

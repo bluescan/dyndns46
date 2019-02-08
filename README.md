@@ -10,11 +10,12 @@ TacitDynDns depends on curl being available. Curl ships with Windows 10 so no ne
 Here is an example of a full configuration file for TacitDynDns:
 
 ```
-; Full configuration example for TacitDynDns.
-;
-; This config file is in symbolic-expression syntax.
-; Any files or external references are relative to the working dir unless you specify an absolute path.
-; Use forward slashes for directory separators.
+<
+    Full configuration example for TacitDynDns.
+
+    This config file is in symbolic-expression syntax. This text is in a multiline comment. Any files or external references
+    are relative to the working dir unless you specify an absolute path. Use forward slashes for directory separators.
+>
 [
     environment
     [ statefile     TacitDynDns.ips ]           ; Default. This file stores the last IP addresses successfully sent.

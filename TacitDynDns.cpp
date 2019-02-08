@@ -240,7 +240,7 @@ void DynDns::UpdateAllServices()
 	if (ipv4.CountChar('.') == 3)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
-			ttfPrintf(Log, "Log: Detected IPV4: %s\n", ipv4.Pod());
+			ttfPrintf(Log, "Log: Detected IPV4 %s\n", ipv4.Pod());
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
@@ -265,7 +265,7 @@ void DynDns::UpdateAllServices()
 			}
 			else if (Verbosity >= eLogVerbosity::Normal)
 			{
-				ttfPrintf(Log, "Log: Skipping IPV4 %s update because no force/always and last IP equal to current.\n", ipv4.Pod());
+				ttfPrintf(Log, "Log: Skipping IPV4 %s on domain %s. No force/always and last IP equal to current.\n", ipv4.Pod(), block->Domain.Pod());
 			}
 		}
 	}
@@ -274,7 +274,7 @@ void DynDns::UpdateAllServices()
 	if (ipv6.CountChar(':') == 7)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
-			ttfPrintf(Log, "Log: Detected IPV6: %s\n", ipv6.Pod());
+			ttfPrintf(Log, "Log: Detected IPV6 %s\n", ipv6.Pod());
 
 		for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
 		{
@@ -299,7 +299,7 @@ void DynDns::UpdateAllServices()
 			}
 			else if (Verbosity >= eLogVerbosity::Normal)
 			{
-				ttfPrintf(Log, "Log: Skipping IPV6 %s update because no force/always and last IP equal to current.\n", ipv6.Pod());
+				ttfPrintf(Log, "Log: Skipping IPV6 %s on domain %s. No force/always and last IP equal to current.\n", ipv6.Pod(), block->Domain.Pod());
 			}
 		}
 	}

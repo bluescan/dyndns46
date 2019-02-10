@@ -382,7 +382,7 @@ int main(int argc, char** argv)
 	try
 	{
 		tCommand::tParse(argc, argv);
-		if ((argc <= 1) || Help)
+		if (Help)
 		{
 			tPrintf
 			(
@@ -404,7 +404,8 @@ int main(int argc, char** argv)
 
 		if (!tFileExists(configFile))
 		{
-			tPrintf("No config file found. Default config name is TacitDynDns.cfg or enter preferred config file in command line.\n");
+			tPrintf("No config file found. Default config name is TacitDynDns.cfg or specify explicitly in command line.\n\n");
+			tCommand::tPrintUsage();
 			return 1;
 		}
 

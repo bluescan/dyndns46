@@ -23,14 +23,19 @@
 using namespace tStd;
 using namespace tBuild;
 using namespace tSystem;
-tCommand::tOption Help("Display help.", 'h', "help");
-tCommand::tOption Force("Force an update even if no change detected.", 'f', "force");
-tCommand::tOption Override("Override the address that gets sent. It will autodetect ipv4 or ipv6. You can add an additional option to do both.", 'o', "override", 1);
-tCommand::tParam ConfigFile(1, "ConfigFile", "The TacitDynDns config file. Defaults to TacitDynDns.cfg");
+tCommand::tOption Help		("Display help.", 'h', "help");
+tCommand::tOption Syntax	("Display command line syntax.", 's', "syntax");
+tCommand::tOption Force		("Force an update even if no change detected.", 'f', "force");
+tCommand::tOption Override	("Override ipv4 or ipv6 addr. Two options allowed for both.", 'o', "override", 1);
+tCommand::tParam ConfigFile	("The config file. Defaults to TacitDynDns.cfg", "ConfigFile", 1);
 
 
 namespace DynDns
 {
+	int VersionMajor			= 1;
+	int VersionMinor			= 0;
+	int VersionRevision			= 1;
+
 	//								Default
 	enum class eRecord			{	IPV4,		IPV6 };
 	enum class eProtocol		{	HTTPS,		HTTP };
@@ -127,6 +132,7 @@ void DynDns::ParseEnvironmentBlock(tExpr& block)
 			Curl = entry.Arg1().GetAtomString();
 	}
 }
+
 
 void DynDns::ParseUpdateBlock(tExpr& block)
 {
@@ -378,7 +384,17 @@ int main(int argc, char** argv)
 		tCommand::tParse(argc, argv);
 		if ((argc <= 1) || Help)
 		{
+			tPrintf
+			(
+				"TacitDynDns V%d.%d.%d (2019.02) by Tristan Grimmer https://github.com/bluescan\n\n",
+				DynDns::VersionMajor, DynDns::VersionMinor, DynDns::VersionRevision
+			);
 			tCommand::tPrintUsage();
+			return 0;
+		}
+		else if (Syntax)
+		{
+			tCommand::tPrintSyntax();
 			return 0;
 		}
 

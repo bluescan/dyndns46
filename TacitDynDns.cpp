@@ -242,6 +242,12 @@ void DynDns::UpdateAllServices()
 			ttfPrintf(Log, "Log: Using IPV6 Override of: %s\n", ipv6.Pod());
 	}
 
+	// Are there any ipv4 blocks?
+	int numIPV4Blocks = 0;
+	for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
+		if (block->Record == eRecord::IPV4)
+			numIPV4Blocks++;
+
 	// Update ipv4 blocks.
 	if (ipv4.CountChar('.') == 3)
 	{
@@ -275,6 +281,17 @@ void DynDns::UpdateAllServices()
 			}
 		}
 	}
+	else if (numIPV4Blocks)
+	{
+		if (Verbosity >= eLogVerbosity::Full)
+			ttfPrintf(Log, "Wrn: Unable to update %d IPV4 blocks. No valid IPV4 detected.\n", numIPV4Blocks);
+	}
+
+	// Are there any ipv46blocks?
+	int numIPV6Blocks = 0;
+	for (UpdateBlock* block = UpdateBlocks.First(); block; block = block->Next())
+		if (block->Record == eRecord::IPV6)
+			numIPV6Blocks++;
 
 	// Update ipv6 blocks.
 	if (ipv6.CountChar(':') == 7)
@@ -308,6 +325,11 @@ void DynDns::UpdateAllServices()
 				ttfPrintf(Log, "Log: Skipping IPV6 %s on domain %s. No force/always and last IP equal to current.\n", ipv6.Pod(), block->Domain.Pod());
 			}
 		}
+	}
+	else if (numIPV6Blocks)
+	{
+		if (Verbosity >= eLogVerbosity::Full)
+			ttfPrintf(Log, "Wrn: Unable to update %d IPV6 blocks. No valid IPV6 detected.\n", numIPV6Blocks);
 	}
 }
 
@@ -410,7 +432,7 @@ int main(int argc, char** argv)
 		}
 
 		DynDns::ReadConfigFile(configFile);
-		if (DynDns::Verbosity != DynDns::eLogVerbosity::None)
+		if (DynDns::Verbosity > DynDns::eLogVerbosity::None)
 			DynDns::Log = tOpenFile(DynDns::LogFile.Pod(), "at+");
 
 		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Full)

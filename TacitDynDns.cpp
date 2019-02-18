@@ -426,7 +426,7 @@ int main(int argc, char** argv)
 
 		if (!tFileExists(configFile))
 		{
-			tPrintf("No config file found. Default config name is TacitDynDns.cfg or specify explicitly in command line.\n\n");
+			tPrintf("No config file found. Default config name is TacitDynDns.cfg or specify an alternate in the command line.\n\n");
 			tCommand::tPrintUsage();
 			return 1;
 		}
@@ -450,6 +450,8 @@ int main(int argc, char** argv)
 	{
 		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Normal)
 			ttfPrintf(DynDns::Log, "Error:\n%s\n", error.Message.Pod());
+
+		tSystem::tCloseFile(DynDns::Log);
 		return 1;
 	}
 

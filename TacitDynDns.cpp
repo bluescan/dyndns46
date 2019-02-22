@@ -41,6 +41,7 @@ namespace DynDns
 	enum class eProtocol		{	HTTPS,		HTTP };
 	enum class eMode			{	Changed,	Always };
 
+	bool IsLogNewDay(const tString& logFile);
 	void ReadConfigFile(const tString& configFile);
 	void ParseEnvironmentBlock(tExpr& block);
 	void ParseUpdateBlock(tExpr& block);
@@ -58,12 +59,25 @@ namespace DynDns
 	tString LogFile = "TacitDynDns.log";
 	enum class eLogVerbosity
 	{
-		None,				// No log entries.
-		Minimal,			// Only actual updates.
-		Normal,				// Updates and no-update-required entries.
-		Full				// Full logging.
+		// No log entries.
+		None,
+
+		// Default. One line per day max. A "-" means script was run but no updates sent.
+		// A 4 means at least one ipv4 block was updated.
+		// A 6 means at least one ipv6 block was updated.
+		// A A means at least one ipv6 and one ipv4 block was updated.
+		Concise,
+
+		// Only actual updates.
+		Minimal,
+
+		// Updates and no-update-required entries.
+		Normal,
+
+		// Full logging.
+		Full
 	};
-	eLogVerbosity Verbosity = eLogVerbosity::Normal;
+	eLogVerbosity Verbosity = eLogVerbosity::Concise;
 	tString IpLookup = "ifconfig.co";
 	tString Curl = "curl.exe";
 
@@ -81,6 +95,23 @@ namespace DynDns
 	};
 	tList<UpdateBlock> UpdateBlocks;
 	tFileHandle Log = nullptr;
+	bool LogNewDay = false;
+}
+
+
+bool DynDns::IsLogNewDay(const tString& logFile)
+{
+	if (!tFileExists(logFile))
+		return true;
+
+	tFileInfo fileInfo;
+	bool success = tGetFileInfo(fileInfo, logFile);
+	if (!success)
+		return true;
+
+	uint64 currDayNum = tGetTimeLocal() / (10ULL * 1000000ULL * 3600ULL * 24ULL);
+	uint64 logDayNum = fileInfo.ModificationTime / (10ULL * 1000000ULL * 3600ULL * 24ULL);
+	return (currDayNum != logDayNum);
 }
 
 
@@ -117,6 +148,8 @@ void DynDns::ParseEnvironmentBlock(tExpr& block)
 			tString verb = entry.Arg1().GetAtomString();
 			if (verb == "none")
 				Verbosity = eLogVerbosity::None;
+			else if (verb == "concise")
+				Verbosity = eLogVerbosity::Concise;
 			else if (verb == "minimal")
 				Verbosity = eLogVerbosity::Minimal;
 			else if (verb == "normal")
@@ -249,6 +282,7 @@ void DynDns::UpdateAllServices()
 			numIPV4Blocks++;
 
 	// Update ipv4 blocks.
+	bool anyUpdateIPV4 = false;
 	if (ipv4.CountChar('.') == 3)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
@@ -269,6 +303,7 @@ void DynDns::UpdateAllServices()
 						ttfPrintf(Log, "Log: Updated IPV4 %s for domain: %s\n", ipv4.Pod(), block->Domain.Pod());
 
 					block->LastUpdateIP = ipv4;
+					anyUpdateIPV4 = true;
 				}
 				else if (Verbosity >= eLogVerbosity::Full)
 				{
@@ -294,6 +329,7 @@ void DynDns::UpdateAllServices()
 			numIPV6Blocks++;
 
 	// Update ipv6 blocks.
+	bool anyUpdateIPV6 = false;
 	if (ipv6.CountChar(':') == 7)
 	{
 		if (Verbosity >= eLogVerbosity::Full)
@@ -314,6 +350,7 @@ void DynDns::UpdateAllServices()
 						ttfPrintf(Log, "Log: Updated IPV6 %s for domain: %s\n", ipv6.Pod(), block->Domain.Pod());
 
 					block->LastUpdateIP = ipv6;
+					anyUpdateIPV6 = true;
 				}
 				else if (Verbosity >= eLogVerbosity::Full)
 				{
@@ -330,6 +367,24 @@ void DynDns::UpdateAllServices()
 	{
 		if (Verbosity >= eLogVerbosity::Full)
 			ttfPrintf(Log, "Wrn: Unable to update %d IPV6 blocks. No valid IPV6 detected.\n", numIPV6Blocks);
+	}
+
+	if (Verbosity == eLogVerbosity::Concise)
+	{
+		if (LogNewDay)
+		{
+			tfPrintf(Log, "\n");
+			ttfPrintf(Log, "Log: Runs: ");
+		}
+		tString charCode = "-";
+		if (anyUpdateIPV4 && anyUpdateIPV4)
+			charCode = "A";
+		else if (anyUpdateIPV4)
+			charCode = "4";
+		else if (anyUpdateIPV6)
+			charCode = "6";
+
+		tfPrintf(Log, "%s", charCode.Pod());
 	}
 }
 
@@ -433,7 +488,10 @@ int main(int argc, char** argv)
 
 		DynDns::ReadConfigFile(configFile);
 		if (DynDns::Verbosity > DynDns::eLogVerbosity::None)
+		{
+			DynDns::LogNewDay = DynDns::IsLogNewDay(DynDns::LogFile);
 			DynDns::Log = tOpenFile(DynDns::LogFile.Pod(), "at+");
+		}
 
 		if (DynDns::Verbosity >= DynDns::eLogVerbosity::Full)
 			ttfPrintf(DynDns::Log, "Log: Begin entry.\n");

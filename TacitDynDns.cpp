@@ -34,7 +34,7 @@ namespace DynDns
 {
 	int VersionMajor			= 1;
 	int VersionMinor			= 0;
-	int VersionRevision			= 1;
+	int VersionRevision			= 2;
 
 	//								Default
 	enum class eRecord			{	IPV4,		IPV6 };

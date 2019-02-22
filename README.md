@@ -20,7 +20,7 @@ Here is an example of a full configuration file for TacitDynDns:
     environment
     [ statefile     TacitDynDns.ips ]           ; Default. This file stores the last IP addresses successfully sent.
     [ logfile       TacitDynDns.log ]           ; Default. This log is appended to. Tells you when updates were applied/attempted.
-    [ verbosity     normal ]                    ; Default. Choices are none, minimal (updates), normal (logs attempts and updates), and full.
+    [ verbosity     concise ]                   ; Default. Choices are none, concise (one line per day), minimal (updates only), normal (logs attempts and updates), and full.
     [ iplookup      ifconfig.co ]               ; Default. What external service to use to receive your current IPV4 or IPV6 address. Defaults to ifconfig.co
     [ curl          curl.exe ]                  ; Default. Windows 10 has curl built in. Specify the path to curl.exe if you want to use a different version.
 ]
@@ -64,6 +64,14 @@ A minimal config file that updates a single domain's ipv4 address using https lo
 ```
 
 The default config file is TacitDynDns.cfg -- or you can specify a different one on the command line. Additional command-line options include the ability to force an update as well as override the IP(s) that get sent.
+
+The various logging verbosity settings are as follows:
+
+* none : No log file generated.
+* concise : One log file line per day. A '-' means the script was run but no updates were sent. A '4' means at least one ipv4 block updated. A '6' means at least one ipv6 block was updated. An 'A' means at least one ipv4 block AND at least one ipv6 block was updated.
+* minimal : Only updates logged.
+* normal : Includes minimal as well as logging logging when no update was required.
+* full : Includes normal in addition to details like printing the cURL commands that were issued.
 
 To see a description of the options run `TacitDynDns --help` in a console.
 

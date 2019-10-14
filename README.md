@@ -1,5 +1,5 @@
 # tacit-dyndns
-A dynamic DNS updater for Windows written in C++ that uses tacent and curl. Supports ipv4, ipv6, and updating multiple domains. This tool updates your dynamic DNS provider when your IP changes. The command line allows you to force an update and override the sent ip addresses -- invaluable for determining that you've set everything up correctly.
+A dynamic DNS updater for Windows written in C++ that uses the tacent modules and curl. Supports ipv4, ipv6, and updating multiple domains. This tool updates your dynamic DNS provider when your IP changes. The command line allows you to force an update and override the sent ip addresses -- invaluable for determining that you've set everything up correctly.
 
 The tool has been tested with update.spdyn.de but ought to work with other providers -- at worst a small change to the syntax of the curl request would be needed.
 

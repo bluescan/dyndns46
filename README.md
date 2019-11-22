@@ -77,4 +77,4 @@ To see a description of the options run `TacitDynDns --help` in a console.
 
 # build instructions
 
-Open the solution file in VS 2017 and hit build.
+Open the solution file in VS 2019 and hit build.

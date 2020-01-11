@@ -8,7 +8,7 @@
 // use backslashes, but consistency in using forward slashes is advised. Directory path specifications always end with
 // a trailing slash. Without the trailing separator the path will be interpreted as a file.
 //
-// Copyright (c) 2004-2006, 2017 Tristan Grimmer.
+// Copyright (c) 2004-2006, 2017, 2019 Tristan Grimmer.
 // Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
 // granted, provided that the above copyright notice and this permission notice appear in all copies.
 //
@@ -24,7 +24,7 @@
 #include <shlobj.h>
 #include <shlwapi.h>
 #endif
-#include "System/tUtil.h"
+#include "System/tTime.h"
 #include "System/tFile.h"
 
 
@@ -1606,7 +1606,7 @@ void tSystem::tFindFiles(tList<tStringItem>& foundFiles, const tString& fileMask
 				{
 					tString maskExtension = tGetFileExtension(fileMask);
 					tString foundExtension = tGetFileExtension(fd.cFileName);
-					if (maskExtension == foundExtension)
+					if (maskExtension.IsEqualCI(foundExtension))
 						foundFiles.Append(new tStringItem(path + fd.cFileName));
 				}
 				else
@@ -1707,17 +1707,32 @@ void tSystem::tFindDirsRecursive(tList<tStringItem>& foundDirs, const tString& p
 }
 
 
-bool tSystem::tDeleteFile(const tString& filename, bool deleteReadOnly)
+bool tSystem::tDeleteFile(const tString& filename, bool deleteReadOnly, bool useRecycleBin)
 {
 	tString file(filename);
 	file.Replace('/', '\\');
 	if (deleteReadOnly)
 		SetFileAttributes(file, FILE_ATTRIBUTE_NORMAL);
 
-	if (DeleteFile(file))
-		return true;
+	if (!useRecycleBin)
+	{
+		if (DeleteFile(file))
+			return true;
+		else
+			return false;
+	}
 	else
-		return false;
+	{
+		tString filenameDoubleNull = filename + "Z";
+		filenameDoubleNull[filenameDoubleNull.Length()-1] = '\0';
+		SHFILEOPSTRUCT operation;
+		tStd::tMemset(&operation, 0, sizeof(operation));
+		operation.wFunc = FO_DELETE;
+		operation.pFrom = filenameDoubleNull.ConstText();
+		operation.fFlags = FOF_ALLOWUNDO | FOF_NO_UI | FOF_NORECURSION;
+		int errCode = SHFileOperation(&operation);
+		return errCode ? false : true;
+	}
 }
 
 

@@ -9,7 +9,7 @@
 //
 // The second format is a functional format. ex. a(b,c) See tFunExtression.
 //
-// Copyright (c) 2006, 2017 Tristan Grimmer.
+// Copyright (c) 2006, 2017, 2019 Tristan Grimmer.
 // Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
 // granted, provided that the above copyright notice and this permission notice appear in all copies.
 //
@@ -74,7 +74,8 @@ public:
 	uint64 GetAtomUint64() const																						{ return GetAtomString().GetAsUInt64(); }
 	int GetAtomInt() const																								{ return GetAtomString().GetAsInt(); }
 	float GetAtomFloat() const																							{ return GetAtomString().GetAsFloat(); }
-	uint32 GetAtomHash() const																							{ tMath::tHashString(GetAtomString()); }
+	double GetAtomDouble() const																						{ return GetAtomString().GetAsDouble(); }
+	uint32 GetAtomHash() const																							{ return tMath::tHashString(GetAtomString()); }
 	uint32 Hash() const																									{ return GetAtomHash(); }
 
 	// Vectors, quaternions, matrices, and colours should be of the form (x, y, z). Colours are represented as
@@ -96,6 +97,7 @@ public:
 	operator uint32() const																								{ if (IsAtom()) return GetAtomUint(); else return 0; }
 	operator long() const																								{ if (IsAtom()) return long(GetAtomInt()); else return 0; }
 	operator float() const																								{ if (IsAtom()) return GetAtomFloat(); else return 0.0f; }
+	operator double() const																								{ if (IsAtom()) return GetAtomDouble(); else return 0.0; }
 	operator tMath::tVector2() const																					{ if (IsAtom()) return GetAtomVector2(); else return tMath::tVector2::zero; }
 	operator tMath::tVector3() const																					{ if (IsAtom()) return GetAtomVector3(); else return tMath::tVector3::zero; }
 	operator tMath::tVector4() const																					{ if (IsAtom()) return GetAtomVector4(); else return tMath::tVector4::zero; }
@@ -215,6 +217,7 @@ public:
 	void WriteAtom(const uint64);
 	void WriteAtom(const int);
 	void WriteAtom(const float);
+	void WriteAtom(const double);
 	void WriteAtom(const tMath::tVector2&);
 	void WriteAtom(const tMath::tVector3&);
 	void WriteAtom(const tMath::tVector4&);
@@ -245,6 +248,7 @@ public:
 	void Atom(const uint32 u)																							{ WriteAtom(u); }
 	void Atom(const int i)																								{ WriteAtom(i); }
 	void Atom(const float f)																							{ WriteAtom(f); }
+	void Atom(const double d)																							{ WriteAtom(d); }
 	void Atom(const tMath::tVector2& v)																					{ WriteAtom(v); }
 	void Atom(const tMath::tVector3& v)																					{ WriteAtom(v); }
 	void Atom(const tMath::tVector4& v)																					{ WriteAtom(v); }
@@ -263,16 +267,18 @@ public:
 	void CR()																											{ NewLine(); }
 	void Return()																										{ NewLine(); }
 
-	// The Item functions write a list of 2 to 5 atoms (a command followed by 1 to 4 arguments). They're just
-	// convenience functions to write stuff like [a b] followed by a carraige return. The first atom must always be a
-	// string.
-	template<typename T> void Item(const tString& item0, const T& item1)												{ Begin(); Atom(item0); Atom(item1); End(); CR(); }
-	template<typename T> void Item(const tString& item0, const T& item1, const T& item2)								{ Begin(); Atom(item0); Atom(item1); Atom(item2); End(); CR(); }
-	template<typename T> void Item(const tString& item0, const T& item1, const T& item2, const T& item3)				{ Begin(); Atom(item0); Atom(item1); Atom(item2); Atom(item3); End(); CR(); }
-	template<typename T> void Item(const tString& item0, const T& item1, const T& item2, const T& item3, const T& item4){ Begin(); Atom(item0); Atom(item1); Atom(item2); Atom(item3); Atom(item4); End(); CR(); }
-	void WriteItem(const tString& name, const tString& value);
+	// The Comp (Compose) functions write a list of 2 to 5 atoms (a command followed by 1 to 4 arguments). They are
+	// convenience functions to write expressions of the form [s a b] followed by a carraige return. The first atom is
+	// always a string and remaining atoms are always of the same type. Before the expression is written, the correct
+	// number of indents is inserted. Ex. To write 4 integers:
+	// Comp("LeftRightTopBottom", 4, 2, -2, 1);
+	template<typename T> void Comp(const tString& s, const T& a)														{ WriteIndents(); Begin(); Atom(s); Atom(a); End(); CR(); }
+	template<typename T> void Comp(const tString& s, const T& a, const T& b)											{ WriteIndents(); Begin(); Atom(s); Atom(a); Atom(b); End(); CR(); }
+	template<typename T> void Comp(const tString& s, const T& a, const T& b, const T& c)								{ WriteIndents(); Begin(); Atom(s); Atom(a); Atom(b); Atom(c); End(); CR(); }
+	template<typename T> void Comp(const tString& s, const T& a, const T& b, const T& c, const T& d)					{ WriteIndents(); Begin(); Atom(s); Atom(a); Atom(b); Atom(c); Atom(d); End(); CR(); }
 
 private:
+	void WriteIndents()																									{ int tabs = CurrIndent / IndentDelta; for (int t = 0; t < tabs; t++) tfPrintf(ScriptFile, "\t"); }
 	int CurrIndent;
 	static const int IndentDelta = 4;
 

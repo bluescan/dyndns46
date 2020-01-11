@@ -2,7 +2,7 @@
 //
 // Dynamic DNS Updater.
 //
-// Copyright (c) 2019 Tristan Grimmer.
+// Copyright (c) 2019, 2020 Tristan Grimmer.
 // Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
 // granted, provided that the above copyright notice and this permission notice appear in all copies.
 //
@@ -17,6 +17,7 @@
 #include <System/tFile.h>
 #include <System/tScript.h>
 #include <System/tUtil.h>
+#include <System/tTime.h>
 #include <Build/tProcess.h>
 
 

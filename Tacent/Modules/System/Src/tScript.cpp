@@ -9,7 +9,7 @@
 //
 // The second format is a functional format. ex. a(b,c) See tFunExtression.
 //
-// Copyright (c) 2006, 2017 Tristan Grimmer.
+// Copyright (c) 2006, 2017, 2019 Tristan Grimmer.
 // Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby
 // granted, provided that the above copyright notice and this permission notice appear in all copies.
 //
@@ -694,6 +694,27 @@ void tScriptWriter::WriteAtom(const float atom)
 }
 
 
+void tScriptWriter::WriteAtom(const double atom)
+{
+	tString val(64);
+	if (tStd::tIsSpecial(atom))
+		tsPrintf(val.Text(), "0.0");
+	else
+		tsPrintf(val.Text(), "%16.16f", atom);
+
+	int l = val.Length();
+
+	// Add a trailing 0 because it looks better.
+	if (val[l-1] == '.')
+	{
+		val[l] = '0';
+		val[l+1] = '\0';
+	}
+
+	WriteAtom(val);
+}
+
+
 void tScriptWriter::WriteAtom(const tVector2& v)
 {
 	tString str("(");
@@ -943,16 +964,6 @@ void tScriptWriter::NewLine()
 
 	if (numWritten != CurrIndent + 1)
 		throw tScriptError("Cannot write to script file.");
-}
-
-
-void tScriptWriter::WriteItem(const tString& name, const tString& value)
-{
-	int numTabs = CurrIndent / IndentDelta;
-	for (int t = 0; t < numTabs; t++)
-		tfPrintf(ScriptFile, "\t");
-
-	tfPrintf(ScriptFile,"[%s %s]\n", name.ConstText(), value.ConstText());
 }
 
 

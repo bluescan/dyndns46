@@ -68,7 +68,7 @@ The default config file is TacitDynDns.cfg -- or you can specify a different one
 The various logging verbosity settings are as follows:
 
 * none : No log file generated.
-* concise : One log file line per day. A '-' means the script was run but no updates were sent. A '4' means at least one ipv4 block updated. A '6' means at least one ipv6 block was updated. An 'A' means at least one ipv4 block AND at least one ipv6 block was updated.
+* concise : One log file line per day. A '-' means the script was run but no updates were sent. A '4' means at least one ipv4 block updated. A '6' means at least one ipv6 block was updated. An 'A' means at least one ipv4 block AND at least one ipv6 block was updated. In this mode if you had set the scheduled task to run every 15 minutes, you'd have (24*60)/15 = 96 characters per log line, with one line generated per day.
 * minimal : Only updates logged.
 * normal : Includes minimal as well as logging logging when no update was required.
 * full : Includes normal in addition to details like printing the cURL commands that were issued.

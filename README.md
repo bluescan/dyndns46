@@ -1,4 +1,4 @@
-# tacit-dyndns
+# dyndns46
 A dynamic DNS updater for Windows written in C++ that uses the tacent modules and curl. Supports ipv4, ipv6, and updating multiple domains. This tool updates your dynamic DNS provider when your IP changes. The command line allows you to force an update and override the sent ip addresses -- invaluable for determining that you've set everything up correctly.
 
 The tool has been tested with update.spdyn.de but ought to work with other providers -- at worst a small change to the syntax of the curl request would be needed.
@@ -7,11 +7,11 @@ The intent is that you run the tool at regular intervals (perhaps every 15 minut
 
 TacitDynDns depends on curl being available. Curl ships with Windows 10 so no need to do anything more on that OS. You may specify an alternate curl executable if you prefer.
 
-Here is an example of a full configuration file for TacitDynDns:
+Here is an example of a full configuration file for DynDns46:
 
 ```
 <
-    Full configuration example for TacitDynDns.
+    Full configuration example for DynDns46.
 
     This config file is in symbolic-expression syntax. This text is in a multiline comment. Any files or external references
     are relative to the working dir unless you specify an absolute path. Use forward slashes for directory separators.
@@ -53,7 +53,7 @@ You can have as many 'update' blocks as you like. If you want to update the same
 A minimal config file that updates a single domain's ipv4 address using https looks like this:
 
 ```
-; Minimal configuration example for TacitDynDns.
+; Minimal configuration example for DynDns46.
 [
     update
     [ domain        your.domain.org ]
@@ -63,7 +63,7 @@ A minimal config file that updates a single domain's ipv4 address using https lo
 ]
 ```
 
-The default config file is TacitDynDns.cfg -- or you can specify a different one on the command line. Additional command-line options include the ability to force an update as well as override the IP(s) that get sent.
+The default config file is DynDns46.cfg -- or you can specify a different one on the command line. Additional command-line options include the ability to force an update as well as override the IP(s) that get sent.
 
 The various logging verbosity settings are as follows:
 
@@ -73,7 +73,7 @@ The various logging verbosity settings are as follows:
 * normal : Includes minimal as well as logging logging when no update was required.
 * full : Includes normal in addition to details like printing the cURL commands that were issued.
 
-To see a description of the options run `TacitDynDns --help` in a console.
+To see a description of the options run `DynDns46 --help` in a console.
 
 # build instructions
 
